@@ -5,17 +5,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CalendarIcon, Plane, Hotel, Plus, Minus, ArrowRight } from "lucide-react";
+import {  Plane, Hotel, Plus, Minus, ArrowRight } from "lucide-react";
 import DotPattern from './ui/dot-pattern';
 import { cn } from "@/lib/utils";
 
-
+// Interface for FormData
 interface FormData {
   from: string;
   to: string;
   departureDate: string;
   returnDate: string;
-  travelers: number | void;
+  travelers: number;
   name: string;
   email: string;
   phone: string;
@@ -42,24 +42,33 @@ export default function HeroSection() {
     email: '',
     phone: '',
     address: '',
+    hotelName: '',
+    hotelLocation: '',
+    checkInDate: '',
+    checkOutDate: '',
+    guests: 1,
   });
 
+  // Add a new city for multi-city trips
   const addCity = () => {
     setCities([...cities, { from: '', to: '' }]);
   };
 
+  // Remove a city from multi-city trips
   const removeCity = (index: number) => {
     const newCities = [...cities];
     newCities.splice(index, 1);
     setCities(newCities);
   };
 
+  // Update cities (from and to fields)
   const updateCity = (index: number, field: 'from' | 'to', value: string) => {
     const newCities = [...cities];
     newCities[index][field] = value;
     setCities(newCities);
   };
 
+  // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
@@ -67,6 +76,7 @@ export default function HeroSection() {
     });
   };
 
+  // Handle traveler change for flight
   const handleTravelerChange = (value: number) => {
     setFormData({
       ...formData,
@@ -74,8 +84,37 @@ export default function HeroSection() {
     });
   };
 
+  // Handle guest change for hotel
+  const handleGuestChange = (value: number) => {
+    setFormData({
+      ...formData,
+      guests: value,
+    });
+  };
+
+  // Validate form data before submission
+  const validateForm = () => {
+
+
+    if (reservationType === "flight") {
+      if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.from || !formData.to || !formData.departureDate) {
+        alert("Please fill in all flight details.");
+        return false;
+      }
+    } else if (reservationType === "hotel") {
+      if (!formData.name || !formData.email || !formData.phone || !formData.hotelName || !formData.hotelLocation || !formData.checkInDate || !formData.checkOutDate) {
+        alert("Please fill in all hotel reservation details.");
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Handle form submission
   const handleSubmitToEmail = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
 
     const response = await fetch('/api/sendEmail', {
       method: 'POST',
@@ -104,9 +143,10 @@ export default function HeroSection() {
           </p>
           <div className="bg-gray-100 p-6 rounded-lg">
             <img src="/ticket.png" alt="Sample Ticket" className="w-full mb-4" />
-            <p className="text-sm text-gray-500">Sample dummy {reservationType}</p>
+            {/* <p className="text-sm text-gray-500">Sample dummy {reservationType}</p> */}
           </div>
         </div>
+
         <div className="md:flex-1 p-8 bg-gray-50">
           <div className="flex space-x-4 mb-6">
             <Button
@@ -178,8 +218,8 @@ export default function HeroSection() {
                         />
                       </div>
                     </div>
-                    {tripType === 'multiCity' && index > 0 && (
-                      <Button variant="outline" size="sm" onClick={() => removeCity(index)}>
+                    {tripType === 'multiCity' && cities.length > 1 && (
+                      <Button type="button" variant="outline" onClick={() => removeCity(index)}>
                         <Minus className="mr-2 h-4 w-4" /> Remove City
                       </Button>
                     )}
@@ -187,42 +227,48 @@ export default function HeroSection() {
                 ))}
 
                 {tripType === 'multiCity' && (
-                  <Button variant="outline" onClick={addCity}>
+                  <Button type="button" variant="outline" onClick={addCity}>
                     <Plus className="mr-2 h-4 w-4" /> Add City
                   </Button>
                 )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="departure">Departure</Label>
-                    <div className="relative">
-                      <Input id="departure" name="departureDate" type="date" value={formData.departureDate} onChange={handleChange} />
-                      <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    </div>
+                    <Label htmlFor="departureDate">Departure Date</Label>
+                    <Input
+                      id="departureDate"
+                      type="date"
+                      name="departureDate"
+                      value={formData.departureDate}
+                      onChange={handleChange}
+                    />
                   </div>
-                  {tripType === 'roundTrip' && (
+                  {tripType !== 'oneWay' && (
                     <div>
-                      <Label htmlFor="return">Return</Label>
-                      <div className="relative">
-                        <Input id="return" name="returnDate" type="date" value={formData.returnDate} onChange={handleChange} />
-                        <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      </div>
+                      <Label htmlFor="returnDate">Return Date</Label>
+                      <Input
+                        id="returnDate"
+                        type="date"
+                        name="returnDate"
+                        value={formData.returnDate}
+                        onChange={handleChange}
+                      />
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="travelers">Travelers</Label>
-                  <Select>
+                  <Label htmlFor="travelers">Number of Travelers</Label>
+                  <Select onValueChange={(value) => handleTravelerChange(Number(value))}>
                     <SelectTrigger id="travelers" className="bg-white">
                       <SelectValue placeholder="Select number of travelers" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1" onClick={() => handleTravelerChange(1)}>1</SelectItem>
-                      <SelectItem value="2" onClick={() => handleTravelerChange(2)}>2</SelectItem>
-                      <SelectItem value="3" onClick={() => handleTravelerChange(3)}>3</SelectItem>
-                      <SelectItem value="4" onClick={() => handleTravelerChange(4)}>4</SelectItem>
-                      <SelectItem value="5" onClick={() => handleTravelerChange(5)}>5</SelectItem>
+                      {[...Array(6)].map((_, i) => (
+                        <SelectItem key={i} value={String(i + 1)}>
+                          {i + 1}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -231,40 +277,60 @@ export default function HeroSection() {
               <>
                 <div>
                   <Label htmlFor="hotelName">Hotel Name</Label>
-                  <Input id="hotelName" name="hotelName" placeholder="e.g. Hilton" value={formData.hotelName} onChange={handleChange} />
+                  <Input
+                    id="hotelName"
+                    name="hotelName"
+                    placeholder="Hotel California"
+                    value={formData.hotelName || ''}
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="hotelLocation">Hotel Location</Label>
-                  <Input id="hotelLocation" name="hotelLocation" placeholder="e.g. New York" value={formData.hotelLocation} onChange={handleChange} />
+                  <Input
+                    id="hotelLocation"
+                    name="hotelLocation"
+                    placeholder="Los Angeles"
+                    value={formData.hotelLocation || ''}
+                    onChange={handleChange}
+                  />
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="checkInDate">Check-in Date</Label>
-                    <div className="relative">
-                      <Input id="checkInDate" name="checkInDate" type="date" value={formData.checkInDate} onChange={handleChange} />
-                      <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    </div>
+                    <Input
+                      id="checkInDate"
+                      type="date"
+                      name="checkInDate"
+                      value={formData.checkInDate || ''}
+                      onChange={handleChange}
+                    />
                   </div>
                   <div>
                     <Label htmlFor="checkOutDate">Check-out Date</Label>
-                    <div className="relative">
-                      <Input id="checkOutDate" name="checkOutDate" type="date" value={formData.checkOutDate} onChange={handleChange} />
-                      <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    </div>
+                    <Input
+                      id="checkOutDate"
+                      type="date"
+                      name="checkOutDate"
+                      value={formData.checkOutDate || ''}
+                      onChange={handleChange}
+                    />
                   </div>
                 </div>
+
                 <div>
                   <Label htmlFor="guests">Number of Guests</Label>
-                  <Select>
+                  <Select onValueChange={(value) => handleGuestChange(Number(value))}>
                     <SelectTrigger id="guests" className="bg-white">
                       <SelectValue placeholder="Select number of guests" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1" onClick={() => handleTravelerChange(1)}>1</SelectItem>
-                      <SelectItem value="2" onClick={() => handleTravelerChange(2)}>2</SelectItem>
-                      <SelectItem value="3" onClick={() => handleTravelerChange(3)}>3</SelectItem>
-                      <SelectItem value="4" onClick={() => handleTravelerChange(4)}>4</SelectItem>
-                      <SelectItem value="5" onClick={() => handleTravelerChange(5)}>5</SelectItem>
+                      {[...Array(6)].map((_, i) => (
+                        <SelectItem key={i} value={String(i + 1)}>
+                          {i + 1}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -272,26 +338,27 @@ export default function HeroSection() {
             )}
 
             <div>
-              <Label htmlFor="address">Address</Label>
-              <Input id="address" name="address" placeholder="123 Main St" value={formData.address} onChange={handleChange} />
+              <Label htmlFor="address">Billing Address</Label>
+              <Input
+                id="address"
+                name="address"
+                placeholder="123 Main St"
+                value={formData.address}
+                onChange={handleChange}
+              />
             </div>
 
             <Button type="submit" variant="default" className="w-full">
-            <span className="flex items-center">
-                 Get Dummy {reservationType === 'flight' ? 'Ticket' : 'Reservation'}
-                      <ArrowRight className="ml-1.5 w-5 h-5" />
-                    </span>
+              <ArrowRight className="mr-2 h-4 w-4" /> Submit and Pay $15
             </Button>
           </form>
         </div>
-
       </div>
       <DotPattern
         className={cn(
           "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]",
         )}
       />
-
     </div>
   );
 }

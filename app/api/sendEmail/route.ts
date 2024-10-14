@@ -20,6 +20,18 @@ export async function POST(req: Request) {
     guests,
   } = await req.json();
 
+  // Default to prevent undefined values if some fields are missing
+  const travelersInfo = travelers || 'N/A';
+  const fromInfo = from || 'N/A';
+  const toInfo = to || 'N/A';
+  const departureDateInfo = departureDate || 'N/A';
+  const returnDateInfo = returnDate || 'N/A';
+  const hotelNameInfo = hotelName || 'N/A';
+  const hotelLocationInfo = hotelLocation || 'N/A';
+  const checkInDateInfo = checkInDate || 'N/A';
+  const checkOutDateInfo = checkOutDate || 'N/A';
+  const guestsInfo = guests || 'N/A';
+
   // Nodemailer setup
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -29,32 +41,34 @@ export async function POST(req: Request) {
     },
   });
 
-  // Flight or Hotel-specific email content
+  // Flight or Hotel-specific email content based on reservation type
   let reservationDetails;
   if (reservationType === 'flight') {
     reservationDetails = `
-      Travelers: ${travelers}
-      From: ${from}
-      To: ${to}
-      Departure Date: ${departureDate}
-      Return Date: ${returnDate ? returnDate : 'N/A'}
+      Travelers: ${travelersInfo}
+      From: ${fromInfo}
+      To: ${toInfo}
+      Departure Date: ${departureDateInfo}
+      Return Date: ${returnDateInfo}
     `;
   } else if (reservationType === 'hotel') {
     reservationDetails = `
-      Hotel Name: ${hotelName}
-      Hotel Location: ${hotelLocation}
-      Check-in Date: ${checkInDate}
-      Check-out Date: ${checkOutDate}
-      Number of Guests: ${guests}
+      Hotel Name: ${hotelNameInfo}
+      Hotel Location: ${hotelLocationInfo}
+      Check-in Date: ${checkInDateInfo}
+      Check-out Date: ${checkOutDateInfo}
+      Number of Guests: ${guestsInfo}
     `;
+  } else {
+    reservationDetails = 'Reservation type is not recognized.';
   }
 
   // General email content for both types
   const emailContent = `
     Name: ${name}
     Email: ${email}
-    Phone Number: ${phone}
-    Current Address: ${address}
+    Phone Number: ${phone || 'N/A'}
+    Current Address: ${address || 'N/A'}
     
     Reservation Type: ${reservationType === 'flight' ? 'Flight Reservation for Visa' : 'Hotel Reservation'}
     
