@@ -8,18 +8,18 @@ const steps = [
   },
   {
     icon: <CheckCircle className="w-12 h-12 text-green-500" />,
-    title: "Select Flight or Hotel",
-    description: "View flight or hotel details or directly select the service"
+    title: "Fill the form",
+    description: "View flight or hotel details and fill the form"
   },
   {
     icon: <UserCheck className="w-12 h-12 text-orange-500" />,
     title: "Confirm Your Booking",
-    description: "Confirm your booking detail and pay to get dummy flight."
+    description: "Confirm your booking detail by paying the amount."
   },
   {
     icon: <FileText className="w-12 h-12 text-purple-500" />,
-    title: "Download Your Ticket",
-    description: "Your booking will be ready for you to download and print out immediately"
+    title: "Get your ticket on Mail",
+    description: "Your booking will be ready for you and you will get the ticket through mail."
   }
 ]
 
@@ -46,12 +46,6 @@ export default function BookingProcess() {
           <path d="M3 21H21" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M5 21V7L13 3V21" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M19 21V11L13 7" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </div>
-      <div className="absolute bottom-10 right-10 animate-float" style={{animationDelay: '2s'}}>
-        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22 2L11 13" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
     </div>

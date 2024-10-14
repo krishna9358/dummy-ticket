@@ -71,12 +71,12 @@ export default function PricingSection() {
           ))}
         </div>
       </div>
-      <footer className="bg-gray-800 text-white py-8">
+      <footer id="footer" className="bg-gray-800 text-white py-8">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-wrap justify-between">
             <div className="w-full md:w-1/3 mb-6 md:mb-0">
               <h3 className="text-xl font-semibold mb-4">About Us</h3>
-              <p className="text-gray-400">We provide dummy flight and hotel bookings for visa applications and travel planning purposes.</p>
+              <p className="text-gray-400 ml-2">We provide dummy flight and hotel bookings for visa applications and travel planning purposes.</p>
             </div>
             <div className="w-full md:w-1/3 mb-6 md:mb-0">
               <h3 className="text-xl font-semibold mb-4">Quick Links</h3>

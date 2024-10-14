@@ -349,7 +349,7 @@ export default function HeroSection() {
             </div>
 
             <Button type="submit" variant="default" className="w-full">
-              <ArrowRight className="mr-2 h-4 w-4" /> Submit and Pay $15
+              <ArrowRight className="mr-2 h-4 w-4" /> Submit and Pay $8
             </Button>
           </form>
         </div>
