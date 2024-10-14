@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CalendarIcon, Plane, Hotel, Plus, Minus, ArrowRight } from "lucide-react";
-import GridPattern from "@/components/ui/animated-grid-pattern";
+import DotPattern from './ui/dot-pattern';
+import { cn } from "@/lib/utils";
+
 
 interface FormData {
   from: string;
@@ -282,8 +284,13 @@ export default function HeroSection() {
             </Button>
           </form>
         </div>
+        <DotPattern
+        className={cn(
+          "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]",
+        )}
+      />
       </div>
-      <GridPattern />
+
     </div>
   );
 }
