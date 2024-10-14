@@ -41,13 +41,6 @@ export default function BookingProcess() {
           ))}
         </div>
       </div>
-      <div className="absolute top-10 left-10 animate-float">
-        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 21H21" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M5 21V7L13 3V21" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M19 21V11L13 7" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </div>
     </div>
   )
 }
