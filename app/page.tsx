@@ -1,5 +1,4 @@
 import BookingProcess from "@/components/booking-process";
-import ClientSection from "@/components/client-section";
 import CallToActionSection from "@/components/cta-section";
 import HeroSection from "@/components/HeroSection2";
 import Navbar from "@/components/Navbar";
@@ -13,7 +12,7 @@ export default function Home() {
       <Navbar /> 
       <HeroSection />
       <BookingProcess />
-      <ClientSection />
+      {/* <ClientSection /> */}
       <ServiceBenefits />
       <CallToActionSection />
       <PricingSection />

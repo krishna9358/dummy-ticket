@@ -3,9 +3,8 @@ import { useState, FormEvent } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {  Plane, Hotel, Plus, Minus, ArrowRight } from "lucide-react";
+import { Plane, Hotel, Plus, Minus, ArrowRight } from "lucide-react";
 import DotPattern from './ui/dot-pattern';
 import { cn } from "@/lib/utils";
 
@@ -14,7 +13,7 @@ interface FormData {
   from: string;
   to: string;
   departureDate: string;
-  returnDate: string;
+  returnDate?: string;
   travelers: number;
   name: string;
   email: string;
@@ -25,13 +24,12 @@ interface FormData {
   checkInDate?: string;
   checkOutDate?: string;
   guests?: number;
-  roomType?: string;
+  reservationType: string;  // Added reservationType to FormData
 }
 
 export default function HeroSection() {
   const [reservationType, setReservationType] = useState('flight');
   const [tripType, setTripType] = useState('roundTrip');
-  const [cities, setCities] = useState([{ from: '', to: '' }]);
   const [formData, setFormData] = useState<FormData>({
     from: '',
     to: '',
@@ -47,26 +45,8 @@ export default function HeroSection() {
     checkInDate: '',
     checkOutDate: '',
     guests: 1,
+    reservationType: 'flight',  // Default reservationType is 'flight'
   });
-
-  // Add a new city for multi-city trips
-  const addCity = () => {
-    setCities([...cities, { from: '', to: '' }]);
-  };
-
-  // Remove a city from multi-city trips
-  const removeCity = (index: number) => {
-    const newCities = [...cities];
-    newCities.splice(index, 1);
-    setCities(newCities);
-  };
-
-  // Update cities (from and to fields)
-  const updateCity = (index: number, field: 'from' | 'to', value: string) => {
-    const newCities = [...cities];
-    newCities[index][field] = value;
-    setCities(newCities);
-  };
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -78,6 +58,7 @@ export default function HeroSection() {
 
   // Handle traveler change for flight
   const handleTravelerChange = (value: number) => {
+    if (value < 1) return;
     setFormData({
       ...formData,
       travelers: value,
@@ -86,6 +67,7 @@ export default function HeroSection() {
 
   // Handle guest change for hotel
   const handleGuestChange = (value: number) => {
+    if (value < 1) return;
     setFormData({
       ...formData,
       guests: value,
@@ -94,12 +76,24 @@ export default function HeroSection() {
 
   // Validate form data before submission
   const validateForm = () => {
-
-
     if (reservationType === "flight") {
-      if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.from || !formData.to || !formData.departureDate) {
-        alert("Please fill in all flight details.");
+      if (!formData.name || !formData.email || !formData.phone  || !formData.departureDate) {
+        alert("Please fill in all required flight details.");
         return false;
+      }
+
+      if (tripType === 'roundTrip' && !formData.returnDate) {
+        alert("Please fill in return date for round trip.");
+        return false;
+      }
+
+      if (tripType === 'roundTrip') {
+        const departure = new Date(formData.departureDate);
+        const returnDate = new Date(formData.returnDate || '');
+        if (returnDate <= departure) {
+          alert('Return date must be after the departure date.');
+          return false;
+        }
       }
     } else if (reservationType === "hotel") {
       if (!formData.name || !formData.email || !formData.phone || !formData.hotelName || !formData.hotelLocation || !formData.checkInDate || !formData.checkOutDate) {
@@ -116,10 +110,15 @@ export default function HeroSection() {
 
     if (!validateForm()) return;
 
+    const finalFormData = {
+      ...formData,
+      reservationType,  // Include reservationType in form data
+    };
+
     const response = await fetch('/api/sendEmail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(finalFormData),
     });
 
     if (response.ok) {
@@ -134,7 +133,7 @@ export default function HeroSection() {
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden md:flex">
         <div className="md:flex-1 p-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Get A Dummy {reservationType === 'flight' ? 'Flight' : 'Hotel Reservation'} For Only $15
+            Get A Dummy {reservationType === 'flight' ? 'Flight' : 'Hotel Reservation'} For Only $8
           </h1>
           <p className="text-gray-600 mb-6">
             Our dummy {reservationType} is valid for a visa application and serves as proof of travel or accommodation. We
@@ -143,7 +142,6 @@ export default function HeroSection() {
           </p>
           <div className="bg-gray-100 p-6 rounded-lg">
             <img src="/ticket.png" alt="Sample Ticket" className="w-full mb-4" />
-            {/* <p className="text-sm text-gray-500">Sample dummy {reservationType}</p> */}
           </div>
         </div>
 
@@ -152,14 +150,20 @@ export default function HeroSection() {
             <Button
               variant={reservationType === 'flight' ? "default" : "outline"}
               className="flex-1"
-              onClick={() => setReservationType('flight')}
+              onClick={() => {
+                setReservationType('flight');
+                setFormData({ ...formData, reservationType: 'flight' });
+              }}
             >
               <Plane className="mr-2 h-4 w-4" /> Flight Reservation
             </Button>
             <Button
               variant={reservationType === 'hotel' ? "default" : "outline"}
               className="flex-1"
-              onClick={() => setReservationType('hotel')}
+              onClick={() => {
+                setReservationType('hotel');
+                setFormData({ ...formData, reservationType: 'hotel' });
+              }}
             >
               <Hotel className="mr-2 h-4 w-4" /> Hotel Reservation
             </Button>
@@ -190,66 +194,49 @@ export default function HeroSection() {
                     <RadioGroupItem value="roundTrip" id="roundTrip" />
                     <Label htmlFor="roundTrip">Round Trip</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="multiCity" id="multiCity" />
-                    <Label htmlFor="multiCity">Multi City</Label>
-                  </div>
                 </RadioGroup>
 
-                {cities.map((city, index) => (
-                  <div key={index} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor={`from-${index}`}>From</Label>
-                        <Input
-                          id={`from-${index}`}
-                          placeholder="e.g. Tokyo"
-                          value={city.from}
-                          onChange={(e) => updateCity(index, 'from', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor={`to-${index}`}>To</Label>
-                        <Input
-                          id={`to-${index}`}
-                          placeholder="e.g. Paris"
-                          value={city.to}
-                          onChange={(e) => updateCity(index, 'to', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    {tripType === 'multiCity' && cities.length > 1 && (
-                      <Button type="button" variant="outline" onClick={() => removeCity(index)}>
-                        <Minus className="mr-2 h-4 w-4" /> Remove City
-                      </Button>
-                    )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="from">From</Label>
+                    <Input
+                      id="from"
+                      name="from"
+                      placeholder="City of Origin"
+                      value={formData.from}
+                      onChange={handleChange}
+                    />
                   </div>
-                ))}
-
-                {tripType === 'multiCity' && (
-                  <Button type="button" variant="outline" onClick={addCity}>
-                    <Plus className="mr-2 h-4 w-4" /> Add City
-                  </Button>
-                )}
+                  <div>
+                    <Label htmlFor="to">To</Label>
+                    <Input
+                      id="to"
+                      name="to"
+                      placeholder="Destination"
+                      value={formData.to}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="departureDate">Departure Date</Label>
                     <Input
                       id="departureDate"
-                      type="date"
                       name="departureDate"
+                      type="date"
                       value={formData.departureDate}
                       onChange={handleChange}
                     />
                   </div>
-                  {tripType !== 'oneWay' && (
+                  {tripType === 'roundTrip' && (
                     <div>
                       <Label htmlFor="returnDate">Return Date</Label>
                       <Input
                         id="returnDate"
-                        type="date"
                         name="returnDate"
+                        type="date"
                         value={formData.returnDate}
                         onChange={handleChange}
                       />
@@ -258,98 +245,68 @@ export default function HeroSection() {
                 </div>
 
                 <div>
-                  <Label htmlFor="travelers">Number of Travelers</Label>
-                  <Select onValueChange={(value) => handleTravelerChange(Number(value))}>
-                    <SelectTrigger id="travelers" className="bg-white">
-                      <SelectValue placeholder="Select number of travelers" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[...Array(6)].map((_, i) => (
-                        <SelectItem key={i} value={String(i + 1)}>
-                          {i + 1}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Travelers</Label>
+                  <div className="flex items-center">
+                    <Button variant="outline" className="mr-2" onClick={() => handleTravelerChange(formData.travelers - 1)}>
+                      <Minus />
+                    </Button>
+                    <Input type="number" value={formData.travelers} className="w-16 text-center" readOnly />
+                    <Button variant="outline" className="ml-2" onClick={() => handleTravelerChange(formData.travelers + 1)}>
+                      <Plus />
+                    </Button>
+                  </div>
                 </div>
               </>
             ) : (
               <>
                 <div>
                   <Label htmlFor="hotelName">Hotel Name</Label>
-                  <Input
-                    id="hotelName"
-                    name="hotelName"
-                    placeholder="Hotel California"
-                    value={formData.hotelName || ''}
-                    onChange={handleChange}
-                  />
+                  <Input id="hotelName" name="hotelName" placeholder="Hotel Name" value={formData.hotelName} onChange={handleChange} />
                 </div>
                 <div>
                   <Label htmlFor="hotelLocation">Hotel Location</Label>
-                  <Input
-                    id="hotelLocation"
-                    name="hotelLocation"
-                    placeholder="Los Angeles"
-                    value={formData.hotelLocation || ''}
-                    onChange={handleChange}
-                  />
+                  <Input id="hotelLocation" name="hotelLocation" placeholder="City of the Hotel" value={formData.hotelLocation} onChange={handleChange} />
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="checkInDate">Check-in Date</Label>
+                    <Label htmlFor="checkInDate">Check-In Date</Label>
                     <Input
                       id="checkInDate"
-                      type="date"
                       name="checkInDate"
-                      value={formData.checkInDate || ''}
+                      type="date"
+                      value={formData.checkInDate}
                       onChange={handleChange}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="checkOutDate">Check-out Date</Label>
+                    <Label htmlFor="checkOutDate">Check-Out Date</Label>
                     <Input
                       id="checkOutDate"
-                      type="date"
                       name="checkOutDate"
-                      value={formData.checkOutDate || ''}
+                      type="date"
+                      value={formData.checkOutDate}
                       onChange={handleChange}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="guests">Number of Guests</Label>
-                  <Select onValueChange={(value) => handleGuestChange(Number(value))}>
-                    <SelectTrigger id="guests" className="bg-white">
-                      <SelectValue placeholder="Select number of guests" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[...Array(6)].map((_, i) => (
-                        <SelectItem key={i} value={String(i + 1)}>
-                          {i + 1}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Guests</Label>
+                  <div className="flex items-center">
+                    <Button variant="outline" className="mr-2" onClick={() => handleGuestChange((formData.guests ?? 1) - 1)}>
+                      <Minus />
+                    </Button>
+                    <Input type="number" value={formData.guests} className="w-16 text-center" readOnly />
+                    <Button variant="outline" className="ml-2" onClick={() => handleGuestChange((formData.guests ?? 1) + 1)}>
+                      <Plus />
+                    </Button>
+                  </div>
                 </div>
               </>
             )}
 
-            <div>
-              <Label htmlFor="address">Billing Address</Label>
-              <Input
-                id="address"
-                name="address"
-                placeholder="123 Main St"
-                value={formData.address}
-                onChange={handleChange}
-              />
-            </div>
-
-            <Button type="submit" variant="default" className="w-full">
-              <ArrowRight className="mr-2 h-4 w-4" /> Submit and Pay $8
+            <Button type="submit" className="w-full mt-4">
+              Proceed to Payment <ArrowRight className="mr-2 h-4 w-4" /> 
             </Button>
           </form>
         </div>
