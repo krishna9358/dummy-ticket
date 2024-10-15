@@ -1,5 +1,6 @@
 import BookingProcess from "@/components/booking-process";
 import CallToActionSection from "@/components/cta-section";
+import Footer from "@/components/footer";
 import HeroSection from "@/components/HeroSection2";
 import Navbar from "@/components/Navbar";
 import PricingSection from "@/components/pricing-footer";
@@ -13,10 +14,10 @@ export default function Home() {
       <HeroSection />
       <BookingProcess />
       {/* <ClientSection /> */}
+      <PricingSection />
       <ServiceBenefits />
       <CallToActionSection />
-      <PricingSection />
-      
+      <Footer />
     </div>
   );
 }
