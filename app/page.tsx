@@ -1,8 +1,8 @@
 import BookingProcess from "@/components/booking-process";
 import CallToActionSection from "@/components/cta-section";
-import Footer from "@/components/footer";
+// import Footer from "@/components/footer";
 import HeroSection from "@/components/HeroSection2";
-import Navbar from "@/components/Navbar";
+// import Navbar from "@/components/Navbar";
 import PricingSection from "@/components/pricing-footer";
 import ServiceBenefits from "@/components/service-benefits";
 
@@ -10,14 +10,14 @@ import ServiceBenefits from "@/components/service-benefits";
 export default function Home() {
   return (
     <div >
-      <Navbar /> 
+      {/* <Navbar />  */}
       <HeroSection />
       <BookingProcess />
       {/* <ClientSection /> */}
       <PricingSection />
       <ServiceBenefits />
       <CallToActionSection />
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

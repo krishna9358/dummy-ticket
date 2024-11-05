@@ -7,6 +7,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plane, Hotel, Plus, Minus, ArrowRight } from "lucide-react";
 import DotPattern from './ui/dot-pattern';
 import { cn } from "@/lib/utils";
+import React from 'react';
+import { loadStripe } from '@stripe/stripe-js';
+
+//payment
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+);
+
 
 // Interface for FormData
 interface FormData {
@@ -114,6 +122,7 @@ export default function HeroSection() {
       ...formData,
       reservationType,  // Include reservationType in form data
     };
+    
 
     const response = await fetch('/api/sendEmail', {
       method: 'POST',
@@ -127,6 +136,18 @@ export default function HeroSection() {
       alert('Failed to send email');
     }
   };
+
+  React.useEffect(() => {
+    // Check to see if this is a redirect back from Checkout
+    const query = new URLSearchParams(window.location.search);
+    if (query.get('success')) {
+      console.log('Order placed! You will receive an email confirmation.');
+    }
+
+    if (query.get('canceled')) {
+      console.log('Order canceled -- continue to shop around and checkout when you’re ready.');
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white p-8">
@@ -169,7 +190,7 @@ export default function HeroSection() {
             </Button>
           </div>
 
-          <form className="space-y-4" onSubmit={handleSubmitToEmail}>
+          <form className="space-y-4" action="/api/checkout"  method='POST'>
             <div>
               <Label htmlFor="name">Full Name</Label>
               <Input id="name" name="name" placeholder="John Doe" value={formData.name} onChange={handleChange} />
