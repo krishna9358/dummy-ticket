@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 
 export async function POST(req: Request) {
   try {
+    // Destructure the incoming form data from the request
     const {
       name,
       email,
@@ -12,7 +13,6 @@ export async function POST(req: Request) {
       to,
       departureDate,
       returnDate,
-      // address,
       reservationType,
       hotelName,
       hotelLocation,
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       guests,
     } = await req.json();
 
-    // Debug log: to check what data is being received in the request
+    // Log received data for debugging
     console.log('Received request data:', {
       name,
       email,
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       guests,
     });
 
-    // Default values to prevent undefined fields
+    // Fallback default values to prevent undefined fields in email content
     const reservationTypeInfo = reservationType || 'flight';
     const travelersInfo = travelers || 'N/A';
     const fromInfo = from || 'N/A';
@@ -50,56 +50,46 @@ export async function POST(req: Request) {
     const checkInDateInfo = checkInDate || 'N/A';
     const checkOutDateInfo = checkOutDate || 'N/A';
     const guestsInfo = guests || 'N/A';
-    // const addressInfo = address || 'N/A';
     const phoneInfo = phone || 'N/A';
 
-    // Validate required fields based on reservation type
-    if (reservationTypeInfo === 'flight') {
-      if (!from || !to || !departureDate) {
-        console.error('Missing flight reservation details');
-        return NextResponse.json({ message: 'Flight details are incomplete' }, { status: 400 });
-      }
+    // Validate fields based on reservation type
+    if (reservationTypeInfo === 'flight' && (!from || !to || !departureDate)) {
+      console.error('Missing flight reservation details');
+      return NextResponse.json({ message: 'Flight details are incomplete' }, { status: 400 });
+    }
+    if (reservationTypeInfo === 'hotel' && (!hotelName || !hotelLocation || !checkInDate || !checkOutDate)) {
+      console.error('Missing hotel reservation details');
+      return NextResponse.json({ message: 'Hotel details are incomplete' }, { status: 400 });
     }
 
-    if (reservationTypeInfo === 'hotel') {
-      if (!hotelName || !hotelLocation || !checkInDate || !checkOutDate) {
-        console.error('Missing hotel reservation details');
-        return NextResponse.json({ message: 'Hotel details are incomplete' }, { status: 400 });
-      }
-    }
-
-    // Nodemailer setup
+    // Configure Nodemailer transporter with Gmail settings
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.GMAIL_USER,  // Environment variable for Gmail user
-        pass: process.env.GMAIL_PASS,  // Environment variable for Gmail password
+        user: process.env.GMAIL_USER, // Your Gmail email address
+        pass: process.env.GMAIL_PASS, // Your Gmail app password
       },
     });
 
-    // Determine reservationDetails based on reservationType
-    let reservationDetails = '';
-    if (reservationTypeInfo === 'flight') {
-      reservationDetails = `
-        <strong>Travelers:</strong> ${travelersInfo}<br/>
-        <strong>From:</strong> ${fromInfo}<br/>
-        <strong>To:</strong> ${toInfo}<br/>
-        <strong>Departure Date:</strong> ${departureDateInfo}<br/>
-        <strong>Return Date:</strong> ${returnDateInfo}<br/>
-      `;
-    } else if (reservationTypeInfo === 'hotel') {
-      reservationDetails = `
-        <strong>Hotel Name:</strong> ${hotelNameInfo}<br/>
-        <strong>Hotel Location:</strong> ${hotelLocationInfo}<br/>
-        <strong>Check-in Date:</strong> ${checkInDateInfo}<br/>
-        <strong>Check-out Date:</strong> ${checkOutDateInfo}<br/>
-        <strong>Number of Guests:</strong> ${guestsInfo}<br/>
-      `;
-    } else {
-      return NextResponse.json({ message: 'Invalid reservation type' }, { status: 400 });
-    }
+    // Reservation details content based on type
+    const reservationDetails =
+      reservationTypeInfo === 'flight'
+        ? `
+          <strong>Travelers:</strong> ${travelersInfo}<br/>
+          <strong>From:</strong> ${fromInfo}<br/>
+          <strong>To:</strong> ${toInfo}<br/>
+          <strong>Departure Date:</strong> ${departureDateInfo}<br/>
+          <strong>Return Date:</strong> ${returnDateInfo}<br/>
+        `
+        : `
+          <strong>Hotel Name:</strong> ${hotelNameInfo}<br/>
+          <strong>Hotel Location:</strong> ${hotelLocationInfo}<br/>
+          <strong>Check-in Date:</strong> ${checkInDateInfo}<br/>
+          <strong>Check-out Date:</strong> ${checkOutDateInfo}<br/>
+          <strong>Number of Guests:</strong> ${guestsInfo}<br/>
+        `;
 
-    // General email content for both types
+    // Email content with HTML structure
     const emailContent = `
       <h1>${reservationTypeInfo === 'flight' ? 'Flight Reservation' : 'Hotel Reservation'}</h1>
       <p><strong>Name:</strong> ${name}</p>
@@ -110,23 +100,24 @@ export async function POST(req: Request) {
       <p>${reservationDetails}</p>
     `;
 
-    // Email options
+    // Configure email options
     const mailOptions = {
       from: process.env.GMAIL_USER,
       to: email,
-      bcc: "krishanmohank974@gmail.com",  // Replace with the recipient's email
-      subject: 'Order To Generate Dummy Ticket or Hotel Reservation',
-      html: emailContent,  // Use 'html' instead of 'text' for HTML content
+      bcc: "krishanmohank974@gmail.com", // Owner email for BCC
+      subject: 'Order Confirmation - Dummy Reservation',
+      html: emailContent,
     };
 
-    // Send email
+    // Send the email
     await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully');
     return NextResponse.json({ message: 'Email sent successfully' }, { status: 200 });
 
   } catch (error) {
-    // Type assertion to treat error as an instance of Error
+    // Capture and log the error for debugging
     const errorMessage = (error as Error).message || 'Unknown error occurred';
-    console.error('Error sending email:', error);
+    console.error('Error sending email:', errorMessage);
     return NextResponse.json({ message: 'Failed to send email', error: errorMessage }, { status: 500 });
   }
 }

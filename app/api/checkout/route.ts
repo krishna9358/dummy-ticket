@@ -1,38 +1,37 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!,{
-  apiVersion: '2024-09-30.acacia',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: '2024-09-30.acacia' });
 
-// Named export for the POST method
-export async function POST(req: NextRequest) {
-   try {
-  //   const origin = req.headers.get('origin'); // Use get method to retrieve the origin
-  //   if (!origin) {
-  //     throw new Error('Origin header is missing'); // Handle missing origin
-  //   }
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price: 'price_1QEbWXSB86dwtW41rbdOWSKf', // Replace with your actual Price ID
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${req.headers.get("origin") }/?success=true`,
-      cancel_url: `${req.headers.get("origin") }/?canceled=true`,
-    });
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  if (req.method === 'POST') {
+    try {
+      const session = await stripe.checkout.sessions.create({
+        // payment_method_types: ['card', 'upi'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'inr',
+              product_data: { name: 'Reservation Ticket' },
+              unit_amount: req.body.amount,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${req.headers.origin}/?success=true`,
+        cancel_url: `${req.headers.origin}/?canceled=true`,
+      });
 
-    return NextResponse.redirect(session.url!, 303);
-  } catch (err) {
-    const errorMessage = (err as Error).message;
-    const statusCode = (err as { statusCode?: number }).statusCode || 500;
-    return new NextResponse(errorMessage, { status: statusCode });
+      res.status(200).json({ id: session.id });
+    } catch (err) {
+      const errorMessage = (err as Error).message;
+      res.status(500).json({ error: errorMessage });
+    }
+  } else {
+    res.setHeader('Allow', 'POST');
+    res.status(405).end('Method Not Allowed');
   }
-}
+};
 
-// Return 405 for unsupported methods
-export function ALL() {
-  return new NextResponse('Method Not Allowed', { status: 405 });
-}
+export default handler;

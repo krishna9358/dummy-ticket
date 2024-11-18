@@ -1,5 +1,5 @@
 'use client';
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,7 @@ import { Plane, Hotel, Plus, Minus, ArrowRight } from "lucide-react";
 import DotPattern from './ui/dot-pattern';
 import { cn } from "@/lib/utils";
 import React from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-
-//payment
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
-
+import { useRouter } from 'next/navigation';
 
 // Interface for FormData
 interface FormData {
@@ -36,6 +30,7 @@ interface FormData {
 }
 
 export default function HeroSection() {
+  const router = useRouter();
   const [reservationType, setReservationType] = useState('flight');
   const [tripType, setTripType] = useState('roundTrip');
   const [formData, setFormData] = useState<FormData>({
@@ -85,7 +80,7 @@ export default function HeroSection() {
   // Validate form data before submission
   const validateForm = () => {
     if (reservationType === "flight") {
-      if (!formData.name || !formData.email || !formData.phone  || !formData.departureDate) {
+      if (!formData.name || !formData.email || !formData.phone || !formData.departureDate) {
         alert("Please fill in all required flight details.");
         return false;
       }
@@ -112,42 +107,19 @@ export default function HeroSection() {
     return true;
   };
 
-  // Handle form submission
-  const handleSubmitToEmail = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-    if (!validateForm()) return;
+    if (validateForm()) {
+      // Proceed with form submission (e.g., send data to the server)
+      const formData = new FormData(event.currentTarget as HTMLFormElement); // Type assertion added
+      const data = Object.fromEntries(formData);
 
-    const finalFormData = {
-      ...formData,
-      reservationType,  // Include reservationType in form data
-    };
-    
-
-    const response = await fetch('/api/sendEmail', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(finalFormData),
-    });
-
-    if (response.ok) {
-      alert('Email sent successfully!');
-    } else {
-      alert('Failed to send email');
+      // Redirect to the payment page with form data
+      const queryString = new URLSearchParams(data as Record<string, string>).toString(); // Convert data to query string
+      router.push(`/payment?${queryString}`); // Use the query string in the URL
     }
   };
-
-  React.useEffect(() => {
-    // Check to see if this is a redirect back from Checkout
-    const query = new URLSearchParams(window.location.search);
-    if (query.get('success')) {
-      console.log('Order placed! You will receive an email confirmation.');
-    }
-
-    if (query.get('canceled')) {
-      console.log('Order canceled -- continue to shop around and checkout when you’re ready.');
-    }
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white p-8">
@@ -190,7 +162,7 @@ export default function HeroSection() {
             </Button>
           </div>
 
-          <form className="space-y-4" action="/api/checkout"  method='POST'>
+          <form className="space-y-4" action="/api/checkout" method='POST' onSubmit={handleSubmit}>
             <div>
               <Label htmlFor="name">Full Name</Label>
               <Input id="name" name="name" placeholder="John Doe" value={formData.name} onChange={handleChange} />
